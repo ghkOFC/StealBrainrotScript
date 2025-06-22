@@ -1,0 +1,406 @@
+-- Script ULTIMATE para Steal a Brainrot
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Lista completa de Brainrots
+local brainrots = {
+    "Noobini Pizzanini", "Lirilì Larilà", "Tim Cheese", "Fluriflura", "Talpa Di Fero",
+    "Svinina Bombardino", "Trippi Troppi", "Tung Tung Tung Sahur", "Gangster Footera",
+    "Boneca Ambalabu", "Ta Ta Ta Ta Sahur", "Cappuccino Assassino", "Brr Brr Patapim",
+    "Trulimero Trulicina", "Bambini Crostini", "Bananita Dolphinita", "Brri Brri Bicus Dicus Bombicus",
+    "Burbaloni Lulilolli", "Chimpanzini Bananini", "Ballerina Cappuccina", "Chef Crabracadabra",
+    "Glorbo Fruttodrillo", "Blueberrinni Octopusini", "Frigo Camelo", "Orangutini Ananassini",
+    "Rhino Toasterino", "Bombardiro Crocodilo", "Bombombini Gusini", "Cocofanto Elefanto",
+    "Tralalero Tralala", "Odin Din Din Dun", "La Vacca Saturno Sarturnita", "Los Tralaleritos",
+    "Graipuss Medussi"
+}
+
+-- Mutações disponíveis
+local mutations = {"Normal", "Blood", "Gold", "Diamond"}
+
+-- Configurações
+local settings = {
+    selectedBrainrot = "Tralalero Tralala",
+    selectedMutation = "Normal",
+    stealDistance = 25,
+    stealCooldown = 1,
+    autoSteal = false,
+    teleportToTarget = true,
+    collectDrops = true,
+    autoBuy = false,
+    basePosition = nil,
+    noclip = false,
+    noclipKey = Enum.KeyCode.F,
+    targetPlayer = nil
+}
+
+-- Cria a interface principal
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "UltimateBrainrotStealerUI"
+screenGui.Parent = game.CoreGui
+
+-- Função para criar frame
+local function createFrame(name, size, position, parent, color)
+    local frame = Instance.new("Frame")
+    frame.Name = name
+    frame.Size = size
+    frame.Position = position
+    frame.BackgroundColor3 = color or Color3.fromRGB(30, 30, 40)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    return frame
+end
+
+-- Função para criar label
+local function createLabel(text, size, position, parent, color, textColor)
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Size = size
+    label.Position = position
+    label.BackgroundColor3 = color or Color3.fromRGB(50, 50, 70)
+    label.TextColor3 = textColor or Color3.new(1, 1, 1)
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = parent
+    return label
+end
+
+-- Função para criar botão
+local function createButton(text, size, position, parent, color, textColor)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.Size = size
+    button.Position = position
+    button.BackgroundColor3 = color or Color3.fromRGB(60, 60, 80)
+    button.TextColor3 = textColor or Color3.new(1, 1, 1)
+    button.Font = Enum.Font.Gotham
+    button.Parent = parent
+    return button
+end
+
+-- Cria a janela principal
+local mainFrame = createFrame("MainFrame", UDim2.new(0, 350, 0, 400), UDim2.new(0.5, -175, 0.5, -200), screenGui)
+
+-- Título
+createLabel("ULTIMATE BRAINROT STEALER", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), mainFrame, Color3.fromRGB(50, 50, 70), Color3.fromRGB(255, 170, 0))
+
+-- Abas
+local tabs = {"Stealer", "Base", "Teleport", "Settings"}
+local currentTab = "Stealer"
+
+local function showTab(tabName)
+    currentTab = tabName
+    for _, child in ipairs(mainFrame:GetChildren()) do
+        if child:IsA("Frame") and child.Name ~= "TabButtons" then
+            child.Visible = child.Name == tabName
+        end
+    end
+end
+
+-- Cria botões de aba
+local tabButtonsFrame = createFrame("TabButtons", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 35), mainFrame)
+
+for i, tab in ipairs(tabs) do
+    local button = createButton(tab, UDim2.new(0.25, 0, 1, 0), UDim2.new(0.25*(i-1), 0, 0, 0), tabButtonsFrame)
+    button.MouseButton1Click:Connect(function()
+        showTab(tab)
+    end)
+end
+
+-- TAB STEALER
+local stealerFrame = createFrame("Stealer", UDim2.new(1, 0, 1, -65), UDim2.new(0, 0, 0, 65), mainFrame)
+stealerFrame.Visible = true
+
+-- Seletor de Brainrot
+createLabel("Brainrot:", UDim2.new(0.45, 0, 0, 20), UDim2.new(0.05, 0, 0.05, 0), stealerFrame)
+local brainrotDropdown = createButton(settings.selectedBrainrot, UDim2.new(0.45, 0, 0, 30), UDim2.new(0.05, 0, 0.1, 0), stealerFrame)
+
+-- Seletor de Mutação
+createLabel("Mutação:", UDim2.new(0.45, 0, 0, 20), UDim2.new(0.5, 0, 0.05, 0), stealerFrame)
+local mutationDropdown = createButton(settings.selectedMutation, UDim2.new(0.45, 0, 0, 30), UDim2.new(0.5, 0, 0.1, 0), stealerFrame)
+mutationDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Dropdown de Brainrots
+local brainrotDropdownFrame = createFrame("BrainrotDropdown", UDim2.new(0.9, 0, 0, 150), UDim2.new(0.05, 0, 0.1, 35), stealerFrame, Color3.fromRGB(40, 40, 50))
+brainrotDropdownFrame.Visible = false
+local brainrotScrolling = Instance.new("ScrollingFrame", brainrotDropdownFrame)
+brainrotScrolling.Size = UDim2.new(1, 0, 1, 0)
+brainrotScrolling.CanvasSize = UDim2.new(0, 0, 0, #brainrots * 25)
+
+for i, brainrot in ipairs(brainrots) do
+    local option = createButton(brainrot, UDim2.new(1, -5, 0, 25), UDim2.new(0, 0, 0, (i-1)*25), brainrotScrolling, Color3.fromRGB(50, 50, 70))
+    option.MouseButton1Click:Connect(function()
+        settings.selectedBrainrot = brainrot
+        brainrotDropdown.Text = brainrot
+        brainrotDropdownFrame.Visible = false
+    end)
+end
+
+brainrotDropdown.MouseButton1Click:Connect(function()
+    brainrotDropdownFrame.Visible = not brainrotDropdownFrame.Visible
+end)
+
+-- Dropdown de Mutações
+local mutationDropdownFrame = createFrame("MutationDropdown", UDim2.new(0.45, 0, 0, #mutations * 30), UDim2.new(0.5, 0, 0.1, 35), stealerFrame, Color3.fromRGB(40, 40, 50))
+mutationDropdownFrame.Visible = false
+
+for i, mutation in ipairs(mutations) do
+    local color = Color3.new(1, 1, 1)
+    if mutation == "Blood" then color = Color3.fromRGB(200, 0, 0)
+    elseif mutation == "Gold" then color = Color3.fromRGB(255, 215, 0)
+    elseif mutation == "Diamond" then color = Color3.fromRGB(0, 200, 255) end
+    
+    local option = createButton(mutation, UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, (i-1)*25), mutationDropdownFrame, Color3.fromRGB(50, 50, 70), color)
+    option.MouseButton1Click:Connect(function()
+        settings.selectedMutation = mutation
+        mutationDropdown.Text = mutation
+        mutationDropdown.TextColor3 = color
+        mutationDropdownFrame.Visible = false
+    end)
+end
+
+mutationDropdown.MouseButton1Click:Connect(function()
+    mutationDropdownFrame.Visible = not mutationDropdownFrame.Visible
+end)
+
+-- Botões de controle
+local toggleStealButton = createButton("INICIAR ROUBO", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.45, 0), stealerFrame, Color3.fromRGB(0, 150, 0))
+local toggleBuyButton = createButton("INICIAR COMPRA", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.65, 0), stealerFrame, Color3.fromRGB(0, 100, 150))
+
+-- Configurações
+local teleportToggle = createButton("Teleportar: ON", UDim2.new(0.45, 0, 0, 25), UDim2.new(0.05, 0, 0.3, 0), stealerFrame, Color3.fromRGB(0, 100, 0))
+local collectToggle = createButton("Coletar: ON", UDim2.new(0.45, 0, 0, 25), UDim2.new(0.5, 0, 0.3, 0), stealerFrame, Color3.fromRGB(0, 100, 0))
+
+-- Status
+local statusLabel = createLabel("Status: Inativo", UDim2.new(0.9, 0, 0, 20), UDim2.new(0.05, 0, 0.85, 0), stealerFrame)
+
+-- TAB BASE
+local baseFrame = createFrame("Base", UDim2.new(1, 0, 1, -65), UDim2.new(0, 0, 0, 65), mainFrame)
+baseFrame.Visible = false
+
+createLabel("DEFESA DE BASE", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), baseFrame, Color3.fromRGB(50, 50, 70), Color3.fromRGB(255, 170, 0))
+
+local setBaseButton = createButton("SETAR BASE", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.2, 0), baseFrame, Color3.fromRGB(70, 70, 90))
+local lockBaseButton = createButton("BLOQUEAR BASE", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.3, 0), baseFrame, Color3.fromRGB(150, 0, 0))
+lockBaseButton.Visible = false
+
+local baseStatus = createLabel("Base não setada", UDim2.new(0.9, 0, 0, 20), UDim2.new(0.05, 0, 0.1, 0), baseFrame)
+
+setBaseButton.MouseButton1Click:Connect(function()
+    settings.basePosition = HumanoidRootPart.Position
+    baseStatus.Text = "Base setada em: " .. math.floor(settings.basePosition.X) .. ", " .. math.floor(settings.basePosition.Y) .. ", " .. math.floor(settings.basePosition.Z)
+    lockBaseButton.Visible = true
+end)
+
+lockBaseButton.MouseButton1Click:Connect(function()
+    if settings.basePosition then
+        character:SetPrimaryPartCFrame(CFrame.new(settings.basePosition))
+        baseStatus.Text = "Teleportado para base!"
+    end
+end)
+
+-- TAB TELEPORT
+local teleportFrame = createFrame("Teleport", UDim2.new(1, 0, 1, -65), UDim2.new(0, 0, 0, 65), mainFrame)
+teleportFrame.Visible = false
+
+createLabel("TELEPORTE", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), teleportFrame, Color3.fromRGB(50, 50, 70), Color3.fromRGB(255, 170, 0))
+
+local playerDropdown = createButton("Selecione Player", UDim2.new(0.9, 0, 0, 30), UDim2.new(0.05, 0, 0.2, 0), teleportFrame)
+local teleportButton = createButton("TELEPORTAR", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.3, 0), teleportFrame, Color3.fromRGB(0, 100, 150))
+
+-- Dropdown de Players
+local playerDropdownFrame = createFrame("PlayerDropdown", UDim2.new(0.9, 0, 0, 150), UDim2.new(0.05, 0, 0.2, 35), teleportFrame, Color3.fromRGB(40, 40, 50))
+playerDropdownFrame.Visible = false
+local playerScrolling = Instance.new("ScrollingFrame", playerDropdownFrame)
+playerScrolling.Size = UDim2.new(1, 0, 1, 0)
+playerScrolling.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 25)
+
+local function updatePlayerList()
+    playerScrolling:ClearAllChildren()
+    for i, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local option = createButton(plr.Name, UDim2.new(1, -5, 0, 25), UDim2.new(0, 0, 0, (i-1)*25), playerScrolling, Color3.fromRGB(50, 50, 70))
+            option.MouseButton1Click:Connect(function()
+                settings.targetPlayer = plr
+                playerDropdown.Text = plr.Name
+                playerDropdownFrame.Visible = false
+            end)
+        end
+    end
+end
+
+playerDropdown.MouseButton1Click:Connect(function()
+    updatePlayerList()
+    playerDropdownFrame.Visible = not playerDropdownFrame.Visible
+end)
+
+teleportButton.MouseButton1Click:Connect(function()
+    if settings.targetPlayer and settings.targetPlayer.Character and settings.targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        character:SetPrimaryPartCFrame(settings.targetPlayer.Character.HumanoidRootPart.CFrame)
+        statusLabel.Text = "Teleportado para " .. settings.targetPlayer.Name
+    end
+end)
+
+-- TAB SETTINGS
+local settingsFrame = createFrame("Settings", UDim2.new(1, 0, 1, -65), UDim2.new(0, 0, 0, 65), mainFrame)
+settingsFrame.Visible = false
+
+createLabel("CONFIGURAÇÕES", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), settingsFrame, Color3.fromRGB(50, 50, 70), Color3.fromRGB(255, 170, 0))
+
+local noclipToggle = createButton("NOCLIP: OFF (F)", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.2, 0), settingsFrame, Color3.fromRGB(100, 0, 0))
+local speedInput = createButton("Velocidade: 16", UDim2.new(0.9, 0, 0, 40), UDim2.new(0.05, 0, 0.4, 0), settingsFrame, Color3.fromRGB(60, 60, 80))
+
+-- Configura Noclip
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == settings.noclipKey and not gameProcessed then
+        settings.noclip = not settings.noclip
+        noclipToggle.Text = "NOCLIP: " .. (settings.noclip and "ON (F)" or "OFF (F)")
+        noclipToggle.BackgroundColor3 = settings.noclip and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if settings.noclip and character then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Configura Velocidade
+speedInput.MouseButton1Click:Connect(function()
+    local newSpeed = tonumber(game:GetService("TextService"):FilterStringAsync("16", player.UserId):GetNonChatStringForBroadcastAsync())
+    if newSpeed then
+        settings.stealDistance = newSpeed
+        speedInput.Text = "Velocidade: " .. newSpeed
+    end
+end)
+
+-- Funções principais
+local function findBrainrot()
+    local closest = nil
+    local minDistance = settings.stealDistance
+    
+    for _, npc in ipairs(workspace:GetChildren()) do
+        if npc.Name:lower():find(settings.selectedBrainrot:lower()) and npc:FindFirstChild("HumanoidRootPart") then
+            local isCorrectMutation = true
+            
+            if settings.selectedMutation ~= "Normal" then
+                isCorrectMutation = npc:FindFirstChild(settings.selectedMutation) or npc.Name:lower():find(settings.selectedMutation:lower())
+            end
+            
+            if isCorrectMutation then
+                local distance = (npc.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+                if distance < minDistance then
+                    closest = npc
+                    minDistance = distance
+                end
+            end
+        end
+    end
+    
+    return closest
+end
+
+local function stealBrainrot(target)
+    if not target then return false end
+    
+    if settings.teleportToTarget then
+        character:SetPrimaryPartCFrame(CFrame.new(target.HumanoidRootPart.Position + Vector3.new(0, 3, 0)))
+        wait(0.2)
+    end
+    
+    local args = {[1] = target, [2] = settings.selectedMutation ~= "Normal" and settings.selectedMutation or nil}
+    
+    local success, err = pcall(function()
+        local remote = game:GetService("ReplicatedStorage"):FindFirstChild("StealEvent") or
+                      game:GetService("ReplicatedStorage"):FindFirstChild("StealRemote")
+        
+        if remote then
+            remote:FireServer(unpack(args))
+            return true
+        else
+            game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+            wait(0.1)
+            keypress(0x45)
+            wait(0.1)
+            keyrelease(0x45)
+            return true
+        end
+    end)
+    
+    return success
+end
+
+local function buyBrainrot()
+    -- Esta função precisaria ser adaptada conforme o sistema de compra do jogo
+    -- Aqui está uma implementação genérica
+    local shop = workspace:FindFirstChild("Shop") or workspace:FindFirstChild("Store")
+    if shop then
+        character:SetPrimaryPartCFrame(shop:GetModelCFrame())
+        wait(0.5)
+        
+        -- Simula a compra (pode precisar disparar um RemoteEvent)
+        local buyEvent = game:GetService("ReplicatedStorage"):FindFirstChild("BuyEvent")
+        if buyEvent then
+            buyEvent:FireServer(settings.selectedBrainrot)
+        else
+            -- Tenta método alternativo
+            for _, part in ipairs(shop:GetDescendants()) do
+                if part:IsA("TextButton") and part.Text:lower():find(settings.selectedBrainrot:lower()) then
+                    fireclickdetector(part:FindFirstChildOfClass("ClickDetector"))
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- Controles principais
+toggleStealButton.MouseButton1Click:Connect(function()
+    settings.autoSteal = not settings.autoSteal
+    toggleStealButton.Text = settings.autoSteal and "PARAR ROUBO" or "INICIAR ROUBO"
+    toggleStealButton.BackgroundColor3 = settings.autoSteal and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(0, 150, 0)
+end)
+
+toggleBuyButton.MouseButton1Click:Connect(function()
+    settings.autoBuy = not settings.autoBuy
+    toggleBuyButton.Text = settings.autoBuy and "PARAR COMPRA" or "INICIAR COMPRA"
+    toggleBuyButton.BackgroundColor3 = settings.autoBuy and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(0, 100, 150)
+end)
+
+teleportToggle.MouseButton1Click:Connect(function()
+    settings.teleportToTarget = not settings.teleportToTarget
+    teleportToggle.Text = "Teleportar: " .. (settings.teleportToTarget and "ON" or "OFF")
+    teleportToggle.BackgroundColor3 = settings.teleportToTarget and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
+end)
+
+collectToggle.MouseButton1Click:Connect(function()
+    settings.collectDrops = not settings.collectDrops
+    collectToggle.Text = "Coletar: " .. (settings.collectDrops and "ON" or "OFF")
+    collectToggle.BackgroundColor3 = settings.collectDrops and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
+end)
+
+-- Loop principal
+while true do
+    if settings.autoSteal then
+        local target = findBrainrot()
+        if target then
+            statusLabel.Text = "Roubando: " .. target.Name .. (settings.selectedMutation ~= "Normal" and " ("..settings.selectedMutation..")" or "")
+            stealBrainrot(target)
+        else
+            statusLabel.Text = "Procurando: " .. settings.selectedBrainrot .. (settings.selectedMutation ~= "Normal" and " ("..settings.selectedMutation..")" or "")
+        end
+    elseif settings.autoBuy then
+        statusLabel.Text = "Comprando: " .. settings.selectedBrainrot
+        buyBrainrot()
+    end
+    
+    wait(settings.stealCooldown)
+end
