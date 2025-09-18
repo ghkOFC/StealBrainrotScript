@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Título e descrição -->
+  <title>Join Private Server</title>
+  <meta property="og:title" content="Join Private Server">
+  <meta property="og:description" content="Check out 🏕️ 99 Nights in the Forest 🌲. It’s one of the millions of unique, user-generated 3D experiences created on Roblox. Build a camp with friends. 🏞️
+
+Something is watching you.
+
+🔥 VOLCANO BIOME PT.1 UPDATE 🔥
+13/09
+
+🏚️ – Brand new structures
+🩸 – Sacrifice offerings to the volcano for loot
+⚔️ – Fresh weapons, armor...">
+
+  <!-- Link final do Roblox -->
+  <meta property="og:url" content="https://www.roblox.com/share?code=e5af91f697290640b941b33269f4742a&type=Server">
+
+  <!-- Imagem que aparece no preview -->
+  <meta property="og:image" content="https://tr.rbxcdn.com/34f4b0ee22c37a1a22f458b833a94e92/420/420/Image/Png">
+</head>
+<body>
+  <script>
+    // Redireciona automaticamente para o Roblox
+    window.location.href = "https://www.roblox.com/share?code=e5af91f697290640b941b33269f4742a&type=Server";
+  </script>
+</body>
+</html>
